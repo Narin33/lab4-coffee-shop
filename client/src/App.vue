@@ -3,17 +3,16 @@
     <router-view />
   </div>
 </template>
-
 <script>
 export default {
   name: 'App'
 }
 </script>
-
 <style>
-/* ใส่ CSS กลางที่นี่ได้ ถ้าต้องการ */
+
 #app {
-  font-family: Arial, sans-serif;
-  margin: 20px;
+  font-family: 'Avenir', Helvetica, Arial, sans-serif;
+  color: #2c3e50;
+  margin-top: 20px;
 }
 </style>

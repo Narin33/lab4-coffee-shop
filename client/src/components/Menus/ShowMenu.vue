@@ -1,21 +1,27 @@
 <template>
   <div>
     <h1>Show Menu</h1>
-    <p>Menu ID: {{ menuId }}</p>
+    <p>ID: {{ menu.id }}</p>
+    <p>Name: {{ menu.name }}</p>
+    <p>Type: {{ menu.type }}</p>
+    <p><button @click="$router.push('/menus')">กลับ</button></p>
   </div>
 </template>
 
 <script>
+import MenusService from '../../services/MenusService'
+
 export default {
   data() {
-    return {
-      menuId: null
-    }
+    return { menu: {} }
   },
-  created() {
-    this.menuId = this.$route.params.menuId
+  async created() {
+    try {
+      let menuId = this.$route.params.menuId
+      this.menu = (await MenusService.show(menuId)).data
+    } catch (err) {
+      console.log(err)
+    }
   }
 }
 </script>
-<style scoped>
-</style>
