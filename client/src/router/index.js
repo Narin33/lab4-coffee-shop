@@ -1,5 +1,12 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
+// 1. นำเข้า Store เพื่อใช้เช็ค Token
+import { useAuthenStore } from '../stores/authen'
+
+// 2. นำเข้าหน้า Login และ Register
+import Login from '../components/Login.vue'
+import Register from '../components/Register.vue'
+
 // ===== Users =====
 import UserIndex from '../components/Users/Index.vue'
 import UserCreate from '../components/Users/CreateUser.vue'
@@ -16,11 +23,23 @@ import MenuShow from '../components/Menus/ShowMenu.vue'
 import CoffeeIndex from '../components/coffees/index.vue'
 import CoffeeCreate from '../components/coffees/CreateCoffee.vue'
 import CoffeeEdit from '../components/coffees/EditCoffee.vue'
-import CoffeeShow from '../components/coffees/ShowCoffee.vue'   // ⭐ เพิ่มบรรทัดนี้
+import CoffeeShow from '../components/coffees/ShowCoffee.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
+    // 3. Route สำหรับ Login และ Register
+    {
+      path: '/login',
+      name: 'login',
+      component: Login
+    },
+    {
+      path: '/register',
+      name: 'register',
+      component: Register
+    },
+
     // ---------- User Routes ----------
     {
       path: '/users',
@@ -65,7 +84,7 @@ const router = createRouter({
       component: MenuShow
     },
 
-    // ---------- Coffee Routes ----------
+    // ---------- Coffee Routes (มีการป้องกัน) ----------
     {
       path: '/coffees',
       name: 'coffees',
@@ -74,19 +93,35 @@ const router = createRouter({
     {
       path: '/coffee/create',
       name: 'coffee-create',
-      component: CoffeeCreate
+      component: CoffeeCreate,
+      // 4. ใส่กุญแจล็อค (ต้อง Login ถึงจะเข้าได้)
+      meta: { requiresAuth: true }
     },
     {
       path: '/coffee/edit/:coffeeId',
       name: 'coffee-edit',
-      component: CoffeeEdit
+      component: CoffeeEdit,
+      // 4. ใส่กุญแจล็อค
+      meta: { requiresAuth: true }
     },
     {
-      path: '/coffee/:coffeeId',          // ⭐ เพิ่ม route ดูรายละเอียด
+      path: '/coffee/:coffeeId',
       name: 'coffee-show',
       component: CoffeeShow
     }
   ]
+})
+
+// 5. ระบบยามเฝ้าประตู (Navigation Guard)
+router.beforeEach((to, from, next) => {
+  const authenStore = useAuthenStore() // เรียกใช้ Store
+
+  // ถ้า Route ที่จะไป ต้องการ Auth (requiresAuth) และ ไม่มี Token
+  if (to.meta.requiresAuth && !authenStore.token) {
+    next({ name: 'login' }) // ดีดไปหน้า Login
+  } else {
+    next() // อนุญาตให้ผ่านไปได้
+  }
 })
 
 export default router
