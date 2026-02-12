@@ -1,101 +1,183 @@
 <template>
-  <div>
-    <h1>Get All Coffees</h1>
-
-    <div v-if="authenStore.token">
-      <p>ผู้ใช้งาน: {{ authenStore.user?.email }}</p>
-      <button @click="logout">ออกจากระบบ (Logout)</button>
-    </div>
-    <div v-else>
-      <button @click="navigateTo('/login')">เข้าสู่ระบบ (Login)</button>
+  <div class="coffee-container">
+    <div class="header-actions">
+      <h2>☕ เมนูกาแฟทั้งหมด ({{ coffees.length }})</h2>
+      <button class="btn btn-create" v-on:click="navigateTo('/coffee/create')">
+        + เพิ่มเมนูใหม่
+      </button>
     </div>
 
-    <hr>
-    
-    <div v-if="authenStore.token">
-      <button @click="navigateTo('/coffee/create')">สร้างกาแฟ +</button>
-    </div>
+    <div v-if="coffees.length > 0" class="coffee-grid">
+      <div v-for="coffee in coffees" :key="coffee.id" class="coffee-card">
+        
+        <div class="coffee-icon">
+          <span v-if="coffee.type === 'hot'" class="icon-hot">☕</span>
+          <span v-else class="icon-iced">🥤</span>
+        </div>
 
-    <div>จำนวนเมนู {{ coffees.length }}</div>
-
-    <div v-if="coffees.length > 0">
-      <div
-        v-for="coffee in coffees"
-        :key="coffee.id"
-        style="margin-bottom: 15px;"
-      >
-        <div>id: {{ coffee.id }}</div>
-        <div>ชื่อเมนู: {{ coffee.name }}</div>
-        <div>ราคา: {{ coffee.price }}</div>
-        <div>ประเภท: {{ coffee.type }}</div>
-
-        <p>
-          <button @click="navigateTo('/coffee/' + coffee.id)">
-            ดูรายละเอียด
-          </button>
-
-          <span v-if="authenStore.token">
-            <button @click="navigateTo('/coffee/edit/' + coffee.id)">
-              แก้ไข
-            </button>
-
-            <button @click="deleteCoffee(coffee)">
-              ลบเมนู
-            </button>
+        <div class="coffee-info">
+          <h3>{{ coffee.name }}</h3>
+          <p class="price">{{ coffee.price }} บาท</p>
+          <span :class="'badge ' + (coffee.type === 'hot' ? 'badge-hot' : 'badge-iced')">
+            {{ coffee.type === 'hot' ? 'ร้อน' : 'เย็น/ปั่น' }}
           </span>
-        </p>
+          <p class="desc">{{ coffee.description }}</p>
+        </div>
 
-        <hr />
+        <div class="coffee-actions">
+          <button class="btn btn-sm btn-view" v-on:click="navigateTo('/coffee/' + coffee.id)">ดู</button>
+          <button class="btn btn-sm btn-edit" v-on:click="navigateTo('/coffee/edit/' + coffee.id)">แก้ไข</button>
+          <button class="btn btn-sm btn-delete" v-on:click="deleteCoffee(coffee)">ลบ</button>
+        </div>
       </div>
     </div>
 
-    <div v-else>
-      ยังไม่มีเมนูกาแฟ
+    <div v-else class="empty-state">
+      <p>... ยังไม่มีเมนูกาแฟ ...</p>
     </div>
   </div>
 </template>
 
 <script>
 import CoffeesService from '../../services/CoffeesService'
-import { useAuthenStore } from '../../stores/authen' // 1. นำเข้า Store
 
 export default {
-  // 2. ดึงค่าจาก Store มาใช้ใน Template
-  setup() {
-    const authenStore = useAuthenStore()
-    return { authenStore }
-  },
-  data () {
+  data() {
     return {
       coffees: []
     }
   },
-  async created () {
-    this.refreshData()
+  async created() {
+    try {
+      this.coffees = (await CoffeesService.index()).data
+    } catch (err) {
+      console.log(err)
+    }
   },
   methods: {
-    // 3. สั่ง Logout และเคลียร์ค่า
-    logout() {
-      this.authenStore.logout()
-      this.$router.push('/login')
-    },
-    navigateTo (route) {
+    navigateTo(route) {
       this.$router.push(route)
     },
-    async deleteCoffee (coffee) {
-      let result = confirm('Want to delete?')
-      if (result) {
+    async deleteCoffee(coffee) {
+      if (confirm("คุณต้องการลบเมนู " + coffee.name + " ใช่ไหม?")) {
         try {
-          await CoffeesService.delete(coffee)
-          this.refreshData()
+          await CoffeesService.delete(coffee.id)
+          this.coffees = (await CoffeesService.index()).data // โหลดข้อมูลใหม่
         } catch (err) {
           console.log(err)
         }
       }
-    },
-    async refreshData () {
-      this.coffees = (await CoffeesService.index()).data
     }
   }
 }
 </script>
+
+<style scoped>
+/* พื้นที่หลัก */
+.coffee-container {
+  padding: 20px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+/* ส่วนหัว */
+.header-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  border-bottom: 2px solid #eee;
+  padding-bottom: 10px;
+}
+
+/* Grid Layout: จัดเรียงการ์ด */
+.coffee-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); /* ปรับขนาดอัตโนมัติ */
+  gap: 20px;
+}
+
+/* การ์ดกาแฟ */
+.coffee-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  transition: transform 0.2s, box-shadow 0.2s;
+  text-align: center;
+  border: 1px solid #eee;
+}
+
+.coffee-card:hover {
+  transform: translateY(-5px); /* ลอยขึ้นเมื่อเอาเมาส์ชี้ */
+  box-shadow: 0 10px 15px rgba(0,0,0,0.1);
+}
+
+/* ไอคอนใหญ่ๆ */
+.coffee-icon {
+  font-size: 50px;
+  margin-bottom: 10px;
+}
+
+.coffee-info h3 {
+  margin: 10px 0 5px;
+  color: #333;
+}
+
+.price {
+  font-size: 18px;
+  font-weight: bold;
+  color: #28a745;
+  margin: 5px 0;
+}
+
+.desc {
+  font-size: 13px;
+  color: #777;
+  margin-top: 10px;
+  min-height: 40px; /* จัดความสูงให้เท่ากัน */
+}
+
+/* ป้ายกำกับ (Badge) */
+.badge {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: bold;
+}
+.badge-hot { background-color: #ffebee; color: #c62828; }
+.badge-iced { background-color: #e3f2fd; color: #1565c0; }
+
+/* ปุ่มต่างๆ */
+.coffee-actions {
+  margin-top: 15px;
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+}
+
+.btn {
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: 0.2s;
+}
+
+.btn-create {
+  padding: 10px 20px;
+  background-color: #28a745;
+  color: white;
+  font-weight: bold;
+}
+
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+
+.btn-view { background-color: #17a2b8; color: white; }
+.btn-edit { background-color: #ffc107; color: black; }
+.btn-delete { background-color: #dc3545; color: white; }
+
+.btn:hover { opacity: 0.8; }
+
+.empty-state { text-align: center; color: #999; margin-top: 50px; }
+</style>

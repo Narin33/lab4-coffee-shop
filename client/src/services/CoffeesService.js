@@ -1,7 +1,7 @@
 import Api from './Api'
 
 export default {
-  index () {
+  index (search) {
     return Api().get('coffees')
   },
   show (coffeeId) {
@@ -13,7 +13,7 @@ export default {
   put (coffee) {
     return Api().put('coffee/' + coffee.id, coffee)
   },
-  delete (coffee) {
-    return Api().delete('coffee/' + coffee.id)
+  delete (coffeeId) {
+    return Api().delete('coffee/' + coffeeId)
   }
 }
