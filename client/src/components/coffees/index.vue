@@ -9,10 +9,18 @@
 
     <div v-if="coffees.length > 0" class="coffee-grid">
       <div v-for="coffee in coffees" :key="coffee.id" class="coffee-card">
-        
-        <div class="coffee-icon">
-          <span v-if="coffee.type === 'hot'" class="icon-hot">☕</span>
-          <span v-else class="icon-iced">🥤</span>
+
+        <!-- รูปกาแฟ (วงกลม) -->
+        <div class="coffee-image-wrapper">
+          <img
+            v-if="coffee.image && coffee.image !== 'null'"
+            :src="getImageUrl(coffee.image)"
+            class="coffee-image"
+          />
+          <div v-else class="coffee-icon">
+            <span v-if="coffee.type === 'hot'">☕</span>
+            <span v-else>🥤</span>
+          </div>
         </div>
 
         <div class="coffee-info">
@@ -58,11 +66,14 @@ export default {
     navigateTo(route) {
       this.$router.push(route)
     },
+    getImageUrl(filename) {
+      return 'http://localhost:8081/assets/coffee/' + filename
+    },
     async deleteCoffee(coffee) {
       if (confirm("คุณต้องการลบเมนู " + coffee.name + " ใช่ไหม?")) {
         try {
           await CoffeesService.delete(coffee.id)
-          this.coffees = (await CoffeesService.index()).data // โหลดข้อมูลใหม่
+          this.coffees = (await CoffeesService.index()).data
         } catch (err) {
           console.log(err)
         }
@@ -73,14 +84,12 @@ export default {
 </script>
 
 <style scoped>
-/* พื้นที่หลัก */
 .coffee-container {
   padding: 20px;
   max-width: 1000px;
   margin: 0 auto;
 }
 
-/* ส่วนหัว */
 .header-actions {
   display: flex;
   justify-content: space-between;
@@ -90,14 +99,12 @@ export default {
   padding-bottom: 10px;
 }
 
-/* Grid Layout: จัดเรียงการ์ด */
 .coffee-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); /* ปรับขนาดอัตโนมัติ */
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   gap: 20px;
 }
 
-/* การ์ดกาแฟ */
 .coffee-card {
   background: white;
   border-radius: 12px;
@@ -109,14 +116,26 @@ export default {
 }
 
 .coffee-card:hover {
-  transform: translateY(-5px); /* ลอยขึ้นเมื่อเอาเมาส์ชี้ */
+  transform: translateY(-5px);
   box-shadow: 0 10px 15px rgba(0,0,0,0.1);
 }
 
-/* ไอคอนใหญ่ๆ */
+/* ===== รูปวงกลม ===== */
+.coffee-image-wrapper {
+  margin-bottom: 15px;
+}
+
+.coffee-image {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;      /* วงกลม */
+  object-fit: cover;       /* ครอบภาพให้พอดี */
+  border: 3px solid #f0f0f0;
+}
+
+/* ถ้าไม่มีรูป */
 .coffee-icon {
   font-size: 50px;
-  margin-bottom: 10px;
 }
 
 .coffee-info h3 {
@@ -135,10 +154,9 @@ export default {
   font-size: 13px;
   color: #777;
   margin-top: 10px;
-  min-height: 40px; /* จัดความสูงให้เท่ากัน */
+  min-height: 40px;
 }
 
-/* ป้ายกำกับ (Badge) */
 .badge {
   padding: 4px 10px;
   border-radius: 20px;
@@ -148,7 +166,6 @@ export default {
 .badge-hot { background-color: #ffebee; color: #c62828; }
 .badge-iced { background-color: #e3f2fd; color: #1565c0; }
 
-/* ปุ่มต่างๆ */
 .coffee-actions {
   margin-top: 15px;
   display: flex;
